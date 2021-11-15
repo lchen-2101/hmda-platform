@@ -1,21 +1,21 @@
 package hmda.validation.engine
 
 import hmda.model.filing.ts.TsGenerators._
-import hmda.model.filing.ts.{TransmittalLar, TransmittalSheet}
+import hmda.model.filing.ts.{ TransmittalLar, TransmittalSheet }
 import hmda.model.validation.TsValidationError
 import hmda.utils.YearUtils.Period
 import hmda.validation.context.ValidationContext
-import hmda.validation.engine.TsLarEngine2020Q._
+import hmda.validation.engine.TsLarEngine2020._
 import org.scalatest.concurrent.Eventually
-import org.scalatest.time.{Millis, Minutes, Span}
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.time.{ Millis, Minutes, Span }
+import org.scalatest.{ MustMatchers, WordSpec }
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class TsLarEngine2022QSpec extends WordSpec with ScalaCheckPropertyChecks with MustMatchers with Eventually {
+class TsLarEngine2022Spec extends WordSpec with ScalaCheckPropertyChecks with MustMatchers with Eventually {
 
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(timeout = Span(2, Minutes), interval = Span(100, Millis))
 
-  "Transmittal Lar Validation Quarterly Engine for 2022" must {
+  "Transmittal Lar Validation Engine for 2022" must {
     "pass all checks for a valid entry" in {
       eventually {
         lazy val ts: TransmittalSheet = tsGen
@@ -29,7 +29,7 @@ class TsLarEngine2022QSpec extends WordSpec with ScalaCheckPropertyChecks with M
           .sample
           .getOrElse(ts)
         val tsLar: TransmittalLar = TransmittalLar(ts.copy(totalLines = 10), "example-ULI", 10, 10, 10,10, 1, Map.empty, Map.empty)
-        val testContext           = ValidationContext(None, Some(Period(2022, Some("Q1"))))
+        val testContext           = ValidationContext(None, Some(Period(2020, None)))
         val validation            = checkAll(tsLar, ts.id.toString, testContext, TsValidationError)
         validation.leftMap(errors => errors.toList mustBe empty)
       }
@@ -39,7 +39,7 @@ class TsLarEngine2022QSpec extends WordSpec with ScalaCheckPropertyChecks with M
       forAll(tsGen) { ts =>
         eventually {
           val tsLar: TransmittalLar = TransmittalLar(ts, "example-ULI", 10, 10, 10, 9, 1, Map("example-ULI" -> List(1)), Map("example-ULI" -> List(1)))
-          val testContext           = ValidationContext(None, Some(Period(2022, Some("Q1"))))
+          val testContext           = ValidationContext(None, Some(Period(2021, None)))
           val validation            = checkAll(tsLar, ts.id.toString, testContext, TsValidationError)
           validation.leftMap(errors => errors.toList must not be empty)
         }

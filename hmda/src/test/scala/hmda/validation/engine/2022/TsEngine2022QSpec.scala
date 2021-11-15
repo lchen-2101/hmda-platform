@@ -8,11 +8,11 @@ import org.scalacheck.Gen
 import org.scalatest.{MustMatchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class TsEngine2022SQpec extends PropSpec with ScalaCheckPropertyChecks with MustMatchers {
+class TsEngine2022QSpec extends PropSpec with ScalaCheckPropertyChecks with MustMatchers {
   val tsGen2020Quarterly = for {
     ts      <- tsGen
     quarter <- Gen.chooseNum[Int](1, 3)
-  } yield ts.copy(year = 2021, quarter = quarter)
+  } yield ts.copy(year = 2022, quarter = quarter)
 
   property("Ts Validation Engine must pass all checks") {
     forAll(tsGen2020Quarterly) { ts =>

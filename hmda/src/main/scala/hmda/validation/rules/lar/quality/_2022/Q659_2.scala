@@ -1,20 +1,16 @@
-package hmda.validation.rules.lar.quality._2021
+package hmda.validation.rules.lar.quality._2022
 
 import hmda.model.filing.lar.LoanApplicationRegister
-import hmda.model.filing.lar.enums._
-import hmda.validation.dsl.PredicateCommon._
-import hmda.validation.dsl.PredicateSyntax.PredicateOps
 import hmda.validation.dsl.{ ValidationFailure, ValidationResult, ValidationSuccess }
 import hmda.validation.rules.EditCheck
 
-
-object Q659_1 extends EditCheck[LoanApplicationRegister] {
-  override def name: String = "Q659-1"
+object Q659_2 extends EditCheck[LoanApplicationRegister] {
+  override def name: String = "Q659-2"
 
   override def parent: String = "Q659"
 
   override def apply(lar: LoanApplicationRegister): ValidationResult = {
-    val invalidExemptCodes = List("888", "88888")
+    val invalidExemptCodes = List("999", "99999")
     val fieldsToCheck = List(
       lar.applicant.age.toString,
       lar.coApplicant.age.toString,

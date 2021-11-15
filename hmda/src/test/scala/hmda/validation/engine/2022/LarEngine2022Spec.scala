@@ -2,21 +2,21 @@ package hmda.validation.engine
 
 import hmda.model.filing.lar.LarGenerators._
 import hmda.model.filing.lar.enums._
-import hmda.model.filing.lar.{Ethnicity, LoanApplicationRegister, Race}
+import hmda.model.filing.lar.{ Ethnicity, LoanApplicationRegister, Race }
 import hmda.model.validation.TsValidationError
 import hmda.utils.YearUtils.Period
 import hmda.validation.context.ValidationContext
-import hmda.validation.engine.LarEngine2020Q._
+import hmda.validation.engine.LarEngine2020._
 import org.scalatest.concurrent.Eventually
-import org.scalatest.time.{Millis, Minutes, Span}
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.time.{ Millis, Minutes, Span }
+import org.scalatest.{ MustMatchers, WordSpec }
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class LarEngine2022QSpec extends WordSpec with ScalaCheckPropertyChecks with MustMatchers with Eventually {
+class LarEngine2022Spec extends WordSpec with ScalaCheckPropertyChecks with MustMatchers with Eventually {
 
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(timeout = Span(2, Minutes), interval = Span(100, Millis))
 
-  "Lar Validation Engine Quarterly must pass all checks for a valid LoanApplicationRegister" in {
+  "Lar Validation Engine must pass all checks for a valid LoanApplicationRegister" in {
     eventually {
       lazy val lar: LoanApplicationRegister = larGen.sample.fold(ifEmpty = lar)(identity)
       val fixedLar =
@@ -117,16 +117,16 @@ class LarEngine2022QSpec extends WordSpec with ScalaCheckPropertyChecks with Mus
           ),
           hoepaStatus = HOEPStatusANotApplicable
         )
-      val testContext = ValidationContext(None, Some(Period(2022, Some("Q1"))))
+      val testContext = ValidationContext(None, Some(Period(2022, None)))
       val validation  = checkAll(fixedLar, fixedLar.larIdentifier.LEI, testContext, TsValidationError)
-      validation.leftMap(errors => errors.toList mustBe empty)
+      validation.leftMap(errors => errors.toList.size mustBe 0)
     }
   }
 
-  "Lar Validation Engine Quarterly must capture errors" in {
+  "Lar Validation Engine must capture errors" in {
     forAll(larGen) { lar =>
       eventually {
-        val testContext = ValidationContext(None, Some(Period(2022, Some("Q1"))))
+        val testContext = ValidationContext(None, Some(Period(2022, None)))
         val validation =
           checkAll(lar, lar.larIdentifier.LEI, testContext, TsValidationError)
         val errors =
