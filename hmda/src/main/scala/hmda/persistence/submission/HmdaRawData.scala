@@ -8,7 +8,7 @@ import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior.CommandHandler
 import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior, RetentionCriteria }
 import hmda.messages.submission.HmdaRawDataCommands.{ AddLines, HmdaRawDataCommand, StopRawData }
-import hmda.messages.submission.HmdaRawDataEvents.{ HmdaRawDataEvent, LineAdded }
+import hmda.messages.submission.HmdaRawDataEvents.{ HmdaRawDataEvent, LineAdded, LinesAdded }
 import hmda.model.filing.submission.SubmissionId
 import hmda.model.processing.state.HmdaRawDataState
 import hmda.persistence.HmdaTypedPersistentActor
@@ -38,7 +38,7 @@ object HmdaRawData extends HmdaTypedPersistentActor[HmdaRawDataCommand, HmdaRawD
           log.debug(s"Persisted: $data")
           maybeReplyTo match {
             case Some(replyTo) =>
-              replyTo ! evts
+              replyTo ! LinesAdded(timestamp, data)
             case None => //Do Nothing
           }
         }
@@ -50,6 +50,7 @@ object HmdaRawData extends HmdaTypedPersistentActor[HmdaRawDataCommand, HmdaRawD
 
   override def eventHandler: (HmdaRawDataState, HmdaRawDataEvent) => HmdaRawDataState = {
     case (state, evt @ LineAdded(_, _)) => state.update(evt)
+    case (state, evt @ LinesAdded(_, _)) => state.update(evt)
   }
 
   def startShardRegion(sharding: ClusterSharding): ActorRef[ShardingEnvelope[HmdaRawDataCommand]] =

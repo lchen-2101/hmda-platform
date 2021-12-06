@@ -8,6 +8,11 @@ message LineAddedMessage {
     string data = 2;
 }
 
+message LinesAddedMessage {
+    int64 timestamp = 1;
+    repeated string data = 2;
+}
+
 message HmdaRawDataStateMessage {
     int32 size = 1;
 }

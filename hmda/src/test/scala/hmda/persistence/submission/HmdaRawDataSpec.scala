@@ -1,7 +1,6 @@
 package hmda.persistence.submission
 
 import java.time.Instant
-
 import akka.actor
 import akka.actor.testkit.typed.scaladsl.TestProbe
 import hmda.persistence.AkkaCassandraPersistenceSpec
@@ -9,7 +8,7 @@ import akka.actor.typed.scaladsl.adapter._
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.cluster.typed.{ Cluster, Join }
 import hmda.messages.submission.HmdaRawDataCommands.AddLines
-import hmda.messages.submission.HmdaRawDataEvents.{ HmdaRawDataEvent, LineAdded }
+import hmda.messages.submission.HmdaRawDataEvents.{ HmdaRawDataEvent, LineAdded, LinesAdded }
 import hmda.model.filing.submission.SubmissionId
 import hmda.utils.YearUtils.Period
 
@@ -20,7 +19,7 @@ class HmdaRawDataSpec extends AkkaCassandraPersistenceSpec {
   val sharding = ClusterSharding(typedSystem)
   HmdaRawData.startShardRegion(sharding)
 
-  val hmdaRawProbe = TestProbe[Seq[HmdaRawDataEvent]]
+  val hmdaRawProbe = TestProbe[HmdaRawDataEvent]
 
   val submissionId = SubmissionId("12345", Period(2018, None), 1)
 
@@ -33,8 +32,7 @@ class HmdaRawDataSpec extends AkkaCassandraPersistenceSpec {
       val timestamp = Instant.now.toEpochMilli
 
       hmdaRawData ! AddLines(submissionId, timestamp, List("data1", "data2"), Some(hmdaRawProbe.ref))
-
-      hmdaRawProbe.expectMessage(Seq(LineAdded(timestamp, "data1"), LineAdded(timestamp, "data2")))
+      hmdaRawProbe.expectMessage(LinesAdded(timestamp, Seq("data1", "data2")))
     }
   }
 

@@ -1,17 +1,17 @@
 package hmda.serialization.submission
 
 import java.io.NotSerializableException
-
 import akka.serialization.SerializerWithStringManifest
-import hmda.messages.submission.HmdaRawDataEvents.LineAdded
+import hmda.messages.submission.HmdaRawDataEvents.{ LineAdded, LinesAdded }
 import hmda.model.processing.state.HmdaRawDataState
-import hmda.persistence.serialization.raw.data.events.{ HmdaRawDataStateMessage, LineAddedMessage }
+import hmda.persistence.serialization.raw.data.events.{ HmdaRawDataStateMessage, LineAddedMessage, LinesAddedMessage }
 import hmda.serialization.submission.HmdaRawDataEventsProtobufConverter._
 
 class HmdaRawDataEventsSerializer extends SerializerWithStringManifest {
   override def identifier: Int = 114
 
   final val LineAddedManifest        = classOf[LineAdded].getName
+  final val LinesAddedManifest       = classOf[LinesAdded].getName
   final val HmdaRawDataStateManifest = classOf[HmdaRawDataState].getName
 
   override def manifest(o: AnyRef): String = o.getClass.getName
@@ -19,6 +19,8 @@ class HmdaRawDataEventsSerializer extends SerializerWithStringManifest {
   override def toBinary(o: AnyRef): Array[Byte] = o match {
     case evt: LineAdded =>
       lineAddedToProtobuf(evt).toByteArray
+    case evt: LinesAdded =>
+      linesAddedToProtobuf(evt).toByteArray
     case evt: HmdaRawDataState =>
       rawDataStateToProtobuf(evt).toByteArray
     case _ =>
@@ -29,6 +31,8 @@ class HmdaRawDataEventsSerializer extends SerializerWithStringManifest {
     manifest match {
       case LineAddedManifest =>
         lineAddedFromProtobuf(LineAddedMessage.parseFrom(bytes))
+      case LinesAddedManifest =>
+        linesAddedFromProtobuf(LinesAddedMessage.parseFrom(bytes))
       case HmdaRawDataStateManifest =>
         rawDataStateFromProtobuf(HmdaRawDataStateMessage.parseFrom(bytes))
       case _ =>

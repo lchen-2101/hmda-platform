@@ -5,4 +5,5 @@ import hmda.messages.CommonMessages.Event
 object HmdaRawDataEvents {
   sealed trait HmdaRawDataEvent                       extends Event
   case class LineAdded(timestamp: Long, data: String) extends HmdaRawDataEvent
+  case class LinesAdded(timestamp: Long, data: Seq[String]) extends HmdaRawDataEvent
 }
