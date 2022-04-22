@@ -48,7 +48,7 @@ object AggregateReports {
 
 //    val awsCredentialsProvider = new AWSStaticCredentialsProvider(
 //      new BasicAWSCredentials(AWS_ACCESS_KEY, AWS_SECRET_KEY))
-val awsCredentialsProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create(AWS_ACCESS_KEY, AWS_SECRET_KEY))
+    val awsCredentialsProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create(AWS_ACCESS_KEY, AWS_SECRET_KEY))
     val region = "us-east-1"
     val awsRegionProvider = new AwsRegionProvider {
       override def getRegion: Region = Region.of(region)
@@ -92,6 +92,8 @@ val awsCredentialsProvider = StaticCredentialsProvider.create(AwsBasicCredential
         .withGroupId(HmdaTopics.adTopic)
         .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
 
+    val reportYear = system.settings.config.getString("report.year")
+
     Consumer
       .committableSource(consumerSettings,
                          Subscriptions.topics(HmdaTopics.adTopic))
@@ -102,7 +104,7 @@ val awsCredentialsProvider = StaticCredentialsProvider.create(AwsBasicCredential
           lookupMap = lookupMap,
           jdbcUrl = JDBC_URL,
           bucket = AWS_BUCKET,
-          year = "2020"
+          year = reportYear
         )).map(_ => msg.committableOffset)
       }
       .async

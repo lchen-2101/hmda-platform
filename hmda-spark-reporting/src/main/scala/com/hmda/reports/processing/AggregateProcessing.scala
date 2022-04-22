@@ -1,7 +1,7 @@
 package com.hmda.reports.processing
 
 import akka.Done
-import akka.actor.{ Actor, ActorLogging, Props }
+import akka.actor.{ Actor, ActorContext, ActorLogging, Props }
 import akka.stream._
 import akka.stream.scaladsl._
 import akka.pattern.pipe
@@ -49,9 +49,11 @@ object AggregateProcessing {
     bucket: String,
     year: String,
     s3Settings: S3Settings
-  )(implicit mat: ActorMaterializer, ec: ExecutionContext): Future[Unit] = {
+  )(implicit mat: ActorMaterializer, ec: ExecutionContext, ctx: ActorContext): Future[Unit] = {
     
     import spark.implicits._
+
+    val reportType = ctx.system.settings.config.getString("report.type")
 
     def cachedRecordsDf: DataFrame =
       spark.read
@@ -64,7 +66,7 @@ object AggregateProcessing {
         .option("upperBound", 99999)
         .option(
           "dbtable",
-          s"(select * from modifiedlar2020_snapshot where state <> 'NA' and county <> 'NA' and lei not in ('BANK1LEIFORTEST12345','BANK3LEIFORTEST12345','BANK4LEIFORTEST12345','999999LE3ZOZXUS7W648','28133080042813308004','B90YWS6AFX2LGWOXJ1LD')) as mlar"
+          s"(select * from modifiedlar${year}_snapshot where state <> 'NA' and county <> 'NA' and lei not in ('BANK1LEIFORTEST12345','BANK3LEIFORTEST12345','BANK4LEIFORTEST12345','999999LE3ZOZXUS7W648','28133080042813308004','B90YWS6AFX2LGWOXJ1LD')) as mlar"
         )
         .load()
         .withColumnRenamed("race_categorization", "race")
@@ -72,14 +74,14 @@ object AggregateProcessing {
         .withColumnRenamed("sex_categorization", "sex")
         .cache()
 
-    val cachedRecordsInstitions2020: DataFrame =
+    val cachedRecordsInstitions: DataFrame =
       spark.read
         .format("jdbc")
         .option("driver", "org.postgresql.Driver")
         .option("url", jdbcUrl)
         .option(
           "dbtable",
-          s"(select lei as institution_lei, respondent_name from institutions2020_snapshot where hmda_filer = true) as institutions2020"
+          s"(select lei as institution_lei, respondent_name from institutions${year}_snapshot where hmda_filer = true) as institutions${year}"
         )
         .load()
         .cache()
@@ -432,7 +434,7 @@ object AggregateProcessing {
 
     def reportedInstitutions() = {
       import spark.implicits._
-      val clonedRenamed = cachedRecordsInstitions2020
+      val clonedRenamed = cachedRecordsInstitions
         .withColumnRenamed("institution_lei", "institution_lei")
         .withColumnRenamed("respondent_name", "respondent_name")
       val clonedDf = cachedRecordsDf
@@ -481,21 +483,26 @@ object AggregateProcessing {
         }
         .runWith(Sink.ignore)
 
+    val aggregateProcess = reportType match {
+      case "1" => persistJson(aggregateTable1)
+      case "2" => persistJson2(aggregateTable2)
+      case "9" => persistJson9(aggregateTable9)
+      case "I" => persistJsonI(aggregateTableI.toList)
+      case "RaceSex" => persistJsonRaceSex(jsonFormationRaceThenGender(RaceGenderProcessing.outputCollectionTable3and4(cachedRecordsDf, spark)))
+      case "EthnicitySex" => persistJsonEthnicitySex(
+        jsonTransformationReportByEthnicityThenGender(RaceGenderProcessing.outputCollectionTable3and4(cachedRecordsDf, spark))
+      )
+      case "IncomeRaceEthnicity" => persistIncomeRaceEthnicity(
+        IncomeRaceEthnicityProcessing.jsonFormationApplicantIncome(
+          IncomeRaceEthnicityProcessing
+            .outputCollectionTableIncome(cachedRecordsDf, spark)
+        )
+      )
+      case _ => throw new IllegalArgumentException(s"Invalid report type: $reportType")
+    }
+
     val result = for {
-//      _ <- persistJson(aggregateTable1)
-//      _ <- persistJson2(aggregateTable2)
-      _ <- persistJson9(aggregateTable9)
-//      _ <- persistJsonI(aggregateTableI.toList)
-//      _ <- persistJsonRaceSex(jsonFormationRaceThenGender(RaceGenderProcessing.outputCollectionTable3and4(cachedRecordsDf, spark)))
-//      _ <- persistJsonEthnicitySex(
-//            jsonTransformationReportByEthnicityThenGender(RaceGenderProcessing.outputCollectionTable3and4(cachedRecordsDf, spark))
-//          )
-//      _ <- persistIncomeRaceEthnicity(
-//            IncomeRaceEthnicityProcessing.jsonFormationApplicantIncome(
-//              IncomeRaceEthnicityProcessing
-//                .outputCollectionTableIncome(cachedRecordsDf, spark)
-//            )
-//          )
+      _ <- aggregateProcess
     } yield ()
 
     result.onComplete {

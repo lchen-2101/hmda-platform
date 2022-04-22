@@ -2,7 +2,7 @@ package com.hmda.reports.processing
 
 import akka.Done
 import akka.actor.SupervisorStrategy.Restart
-import akka.actor.{Actor, ActorLogging, OneForOneStrategy, Props, SupervisorStrategy}
+import akka.actor.{Actor, ActorContext, ActorLogging, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.pattern.pipe
 import akka.stream._
 import akka.stream.alpakka.s3.S3Settings
@@ -83,8 +83,11 @@ object DisclosureProcessingWorker {
                                     bucket: String,
                                     year: String,
                                     s3Settings: S3Settings
-                                  )(implicit mat: ActorMaterializer, ec: ExecutionContext): Future[Unit] = {
+                                  )(implicit mat: ActorMaterializer, ec: ExecutionContext, ctx: ActorContext): Future[Unit] = {
     import spark.implicits._
+
+    val reportYear = ctx.system.settings.config.getString("report.year")
+    val reportType = ctx.system.settings.config.getInt("report.type")
 
     def jsonFormationTable1(msaMd: Msa, input: List[Data], leiDetails: Institution): OutDisclosure1 = {
       val dateFormat = new java.text.SimpleDateFormat("MM/dd/yyyy hh:mm aa")
@@ -204,26 +207,27 @@ object DisclosureProcessingWorker {
         }
         .runWith(Sink.ignore)
 
-    def leiDetails: Institution =
+    def leiDetails: Institution = {
       spark.read
         .format("jdbc")
         .option("driver", "org.postgresql.Driver")
         .option("url", jdbcUrl)
         .option(
           "dbtable",
-          s"(select lei, respondent_name as institutionName from institutions2020_snapshot where lei = '$lei' and hmda_filer = true) as institutions2020"
+          s"(select lei, respondent_name as institutionName from institutions${reportYear}_snapshot where lei = '$lei' and hmda_filer = true) as institutions${reportYear}"
         )
         .load()
         .as[Institution]
         .collect()
         .head
+    }
 
     def cachedRecordsDf: DataFrame =
       spark.read
         .format("jdbc")
         .option("driver", "org.postgresql.Driver")
         .option("url", jdbcUrl)
-        .option("dbtable", s"(select * from modifiedlar2020_snapshot where lei = '$lei') as mlar")
+        .option("dbtable", s"(select * from modifiedlar${reportYear}_snapshot where lei = '$lei') as mlar")
         .load()
         .cache()
 
@@ -249,9 +253,14 @@ object DisclosureProcessingWorker {
         }
         .toList
 
+    val disclosuresTableProcess = reportType match {
+      case 1 => persistJson(disclosuresTable1)
+      case 2 => persistJson2(disclosuresTable2)
+      case _ => throw new IllegalArgumentException(s"Invalid report type: $reportType")
+    }
+
     val result = for {
-//      _ <- persistJson(disclosuresTable1)
-            _ <- persistJson2(disclosuresTable2)
+      _ <- disclosuresTableProcess
     } yield ()
 
     result.onComplete {
