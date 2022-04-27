@@ -486,18 +486,18 @@ object AggregateProcessing {
     val aggregateProcess = reportType match {
       case "1" => persistJson(aggregateTable1)
       case "2" => persistJson2(aggregateTable2)
-      case "9" => persistJson9(aggregateTable9)
-      case "I" => persistJsonI(aggregateTableI.toList)
-      case "RaceSex" => persistJsonRaceSex(jsonFormationRaceThenGender(RaceGenderProcessing.outputCollectionTable3and4(cachedRecordsDf, spark)))
-      case "EthnicitySex" => persistJsonEthnicitySex(
+      case "3" => persistJsonRaceSex(jsonFormationRaceThenGender(RaceGenderProcessing.outputCollectionTable3and4(cachedRecordsDf, spark)))
+      case "4" => persistJsonEthnicitySex(
         jsonTransformationReportByEthnicityThenGender(RaceGenderProcessing.outputCollectionTable3and4(cachedRecordsDf, spark))
       )
-      case "IncomeRaceEthnicity" => persistIncomeRaceEthnicity(
+      case "5" => persistIncomeRaceEthnicity(
         IncomeRaceEthnicityProcessing.jsonFormationApplicantIncome(
           IncomeRaceEthnicityProcessing
             .outputCollectionTableIncome(cachedRecordsDf, spark)
         )
       )
+      case "9" => persistJson9(aggregateTable9)
+      case "i" => persistJsonI(aggregateTableI.toList)
       case _ => throw new IllegalArgumentException(s"Invalid report type: $reportType")
     }
 
