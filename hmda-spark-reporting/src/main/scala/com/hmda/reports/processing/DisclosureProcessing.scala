@@ -214,7 +214,7 @@ object DisclosureProcessingWorker {
         .option("url", jdbcUrl)
         .option(
           "dbtable",
-          s"(select lei, respondent_name as institutionName from institutions${reportYear}_snapshot where lei = '$lei' and hmda_filer = true) as institutions${reportYear}"
+          s"(select lei, respondent_name as institutionName from institutions2021_snapshot_04302022 where lei = '$lei' and hmda_filer = true) as institutions${reportYear}"
         )
         .load()
         .as[Institution]
@@ -227,7 +227,7 @@ object DisclosureProcessingWorker {
         .format("jdbc")
         .option("driver", "org.postgresql.Driver")
         .option("url", jdbcUrl)
-        .option("dbtable", s"(select * from modifiedlar${reportYear}_snapshot where lei = '$lei') as mlar")
+        .option("dbtable", s"(select * from modifiedlar2021_snapshot_04302022 where lei = '$lei') as mlar")
         .load()
         .cache()
 
