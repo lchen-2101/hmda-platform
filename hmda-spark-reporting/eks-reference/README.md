@@ -113,9 +113,9 @@ Trigger job by adding random value to the kafka job `hmda-spark-ad`
 Note: Instructions to be updated once a new repo is created
 ```
 # Clone repo
-git clone https://github.com/omnipresent07/hmda-platform.git
+git clone https://github.com/lchen-2101/hmda-platform.git
 cd hmda-platform/
-git checkout a_d_reports_2020
+git checkout a_d_reports_2021
 
 # Build jar file and docker image
 env JAVA_OPTS="-Xms256m -Xmx4096m -Xss8m" sbt -batch hmda-spark-reporting/docker
