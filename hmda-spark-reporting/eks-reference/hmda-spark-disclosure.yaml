@@ -1,0 +1,69 @@
+apiVersion: "sparkoperator.k8s.io/v1beta2"
+kind: SparkApplication
+metadata:
+  name: hmda-spark-disclosure
+  namespace: default
+spec:
+  type: Scala
+  mode: cluster
+  image: "626560329871.dkr.ecr.us-east-1.amazonaws.com/hmda/hmda-spark-reporting:220427.1"
+  imagePullPolicy: Always
+  mainClass: com.hmda.reports.DisclosureReports
+  mainApplicationFile: "local:///opt/spark/cfpb/hmda/jars/hmda-spark-reporting.jar"
+  sparkVersion: "3.1.1"
+  restartPolicy:
+    type: Never
+  driver:
+    cores: 1
+    coreLimit: "4000m"
+    memory: "8g"
+    labels:
+      version: 3.1.1
+    serviceAccount: spark
+    configMaps:
+      - name: kafka-configmap
+        path: /mnt/kafka-config-maps
+    envVars:
+      REPORT_YEAR: "2020"
+      REPORT_TYPE: "2"
+    envSecretKeyRefs:
+      JDBC_URL:
+        name: inst-postgres-credentials
+        key: url
+      ACCESS_KEY:
+        name: aws-credentials
+        key: aws-access-key-id
+      SECRET_KEY:
+        name: aws-credentials
+        key: aws-secret-access-key
+      KAFKA_HOSTS:
+        name: kafka-hosts
+        key: kafka-hosts
+      AWS_ENV:
+        name: aws-env
+        key: aws-env
+  executor:
+    cores: 2
+    instances: 4
+    memory: "6g"
+    labels:
+      version: 3.1.1
+    configMaps:
+      - name: kafka-configmap
+        path: /mnt/kafka-config-maps
+    envSecretKeyRefs:
+      JDBC_URL:
+        name: inst-postgres-credentials
+        key: url
+      ACCESS_KEY:
+        name: aws-credentials
+        key: aws-access-key-id
+      SECRET_KEY:
+        name: aws-credentials
+        key: aws-secret-access-key
+      AWS_ENV:
+        name: aws-env
+        key: aws-env
+      KAFKA_HOSTS:
+        name: kafka-hosts
+        key: kafka-hosts
