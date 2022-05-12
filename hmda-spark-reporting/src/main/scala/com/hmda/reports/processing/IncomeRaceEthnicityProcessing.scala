@@ -365,7 +365,7 @@ object IncomeRaceEthnicityProcessing {
             "5",
             "Aggregate",
             "Disposition of applications by income, race, and ethnicity of applicant",
-            "2020",
+            "2021",
             dateFormat.format(new java.util.Date()),
             msa,
             totalGrouping

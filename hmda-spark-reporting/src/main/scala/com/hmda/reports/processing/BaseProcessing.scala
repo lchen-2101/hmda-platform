@@ -17,7 +17,7 @@ object BaseProcessing {
   def prepare(df: DataFrame): DataFrame =
     df.filter(col("msa_md") =!= lit(0))
       .filter(upper(col("tract")) =!= lit("NA"))
-      .filter(upper(col("filing_year")) === lit("2020"))
+      .filter(upper(col("filing_year")) === lit("2021"))
 
   def includeZeroAndNonZero(dispInput: DataFrame,
                             title: String,

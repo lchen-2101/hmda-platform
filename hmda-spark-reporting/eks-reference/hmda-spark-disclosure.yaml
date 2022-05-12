@@ -24,8 +24,8 @@ spec:
       - name: kafka-configmap
         path: /mnt/kafka-config-maps
     envVars:
-      REPORT_YEAR: "2020"
-      REPORT_TYPE: "2"
+      REPORT_YEAR: "2021"
+      REPORT_TYPE: "1"
     envSecretKeyRefs:
       JDBC_URL:
         name: inst-postgres-credentials
