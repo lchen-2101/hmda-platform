@@ -63,6 +63,8 @@ object DisclosureReports {
     //    create lookup map of counties
     val lookupMap: Map[(Int, Int), StateMapping] = {
       spark.read
+        .option("fs.s3a.access.key", AWS_ACCESS_KEY)
+        .option("fs.s3a.secret.key", AWS_SECRET_KEY)
         .option("header", "true")
         .csv("s3a://cfpb-hmda-public/dev/cbsa_county_name.csv")
         .select(
