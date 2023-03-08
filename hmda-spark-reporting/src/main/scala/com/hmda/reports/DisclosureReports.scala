@@ -94,6 +94,7 @@ object DisclosureReports {
         .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
 
 
+    val reportYear = system.settings.config.getString("report.year")
 
     val (drainingControl, streamCompleted) = Consumer
       .committableSource(consumerSettings,
@@ -105,7 +106,7 @@ object DisclosureReports {
           lookupMap = lookupMap,
           jdbcUrl = JDBC_URL,
           bucket = AWS_BUCKET,
-          year = "2021"))
+          year = reportYear))
           .map(_ => msg.committableOffset)
       }
       .async

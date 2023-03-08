@@ -86,8 +86,9 @@ object DisclosureProcessingWorker {
                                   )(implicit mat: ActorMaterializer, ec: ExecutionContext, ctx: ActorContext): Future[Unit] = {
     import spark.implicits._
 
-    val reportYear = ctx.system.settings.config.getString("report.year")
     val reportType = ctx.system.settings.config.getInt("report.type")
+    val mlarTable = ctx.system.settings.config.getString("report.table.mlar")
+    val instTable = ctx.system.settings.config.getString("report.table.inst")
 
     def jsonFormationTable1(msaMd: Msa, input: List[Data], leiDetails: Institution): OutDisclosure1 = {
       val dateFormat = new java.text.SimpleDateFormat("MM/dd/yyyy hh:mm aa")
@@ -214,7 +215,7 @@ object DisclosureProcessingWorker {
         .option("url", jdbcUrl)
         .option(
           "dbtable",
-          s"(select lei, respondent_name as institutionName from institutions2021_snapshot_04302022 where lei = '$lei' and hmda_filer = true) as institutions${reportYear}"
+          s"(select lei, respondent_name as institutionName from $instTable where lei = '$lei' and hmda_filer = true) as institutions$year"
         )
         .load()
         .as[Institution]
@@ -227,7 +228,7 @@ object DisclosureProcessingWorker {
         .format("jdbc")
         .option("driver", "org.postgresql.Driver")
         .option("url", jdbcUrl)
-        .option("dbtable", s"(select * from modifiedlar2021_snapshot_04302022 where lei = '$lei') as mlar")
+        .option("dbtable", s"(select * from $mlarTable where lei = '$lei') as mlar")
         .load()
         .cache()
 

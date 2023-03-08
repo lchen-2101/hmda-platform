@@ -54,8 +54,13 @@ object AggregateProcessing {
     import spark.implicits._
 
     val reportType = ctx.system.settings.config.getString("report.type")
+    val mlarTable = ctx.system.settings.config.getString("report.table.mlar")
+    val instTable = ctx.system.settings.config.getString("report.table.inst")
+    val testLei = ctx.system.settings.config.getString("report.lei.test").split(",").toSeq.mkString("','")
+    val excludedLeis = ctx.system.settings.config.getString("report.lei.exclusion").split(",").toSeq.mkString("','")
 
-    def cachedRecordsDf: DataFrame =
+    def cachedRecordsDf: DataFrame = {
+      val leiFilter = if (testLei.nonEmpty) s"lei in ('$testLei')" else s"lei not in ('$excludedLeis')"
       spark.read
         .format("jdbc")
         .option("driver", "org.postgresql.Driver")
@@ -66,13 +71,14 @@ object AggregateProcessing {
         .option("upperBound", 99999)
         .option(
           "dbtable",
-          s"(select * from modifiedlar2021_snapshot_04302022 where state <> 'NA' and county <> 'NA' and lei not in ('BANK1LEIFORTEST12345','BANK3LEIFORTEST12345','BANK4LEIFORTEST12345','999999LE3ZOZXUS7W648','28133080042813308004','B90YWS6AFX2LGWOXJ1LD')) as mlar"
+          s"(select * from $mlarTable where state <> 'NA' and county <> 'NA' and $leiFilter) as mlar"
         )
         .load()
         .withColumnRenamed("race_categorization", "race")
         .withColumnRenamed("ethnicity_categorization", "ethnicity")
         .withColumnRenamed("sex_categorization", "sex")
         .cache()
+    }
 
     val cachedRecordsInstitions: DataFrame =
       spark.read
@@ -81,7 +87,7 @@ object AggregateProcessing {
         .option("url", jdbcUrl)
         .option(
           "dbtable",
-          s"(select lei as institution_lei, respondent_name from institutions2021_snapshot_04302022 where hmda_filer = true) as institutions${year}"
+          s"(select lei as institution_lei, respondent_name from $instTable where hmda_filer = true) as institutions$year"
         )
         .load()
         .cache()
@@ -464,7 +470,7 @@ object AggregateProcessing {
         OutReportedInstitutions(
           "I",
           "Aggregate",
-          "List of financial institutions whose data make up the 2021 MSA/MD aggregate report",
+          s"List of financial institutions whose data make up the $year MSA/MD aggregate report",
           year,
           dateFormat.format(new java.util.Date()),
           msaMd,
