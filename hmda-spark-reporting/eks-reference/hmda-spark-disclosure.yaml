@@ -26,6 +26,10 @@ spec:
     envVars:
       REPORT_YEAR: "2021"
       REPORT_TYPE: "1"
+      MLAR_TABLE: "modifiedlar2021_snapshot_04302022"
+      INST_TABLE: "institutions2021_snapshot_04302022"
+      TEST_LEI: ""
+      LEIS_EXCLUDED: "BANK1LEIFORTEST12345,BANK3LEIFORTEST12345,BANK4LEIFORTEST12345,999999LE3ZOZXUS7W648,28133080042813308004,B90YWS6AFX2LGWOXJ1LD"
     envSecretKeyRefs:
       JDBC_URL:
         name: inst-postgres-credentials
