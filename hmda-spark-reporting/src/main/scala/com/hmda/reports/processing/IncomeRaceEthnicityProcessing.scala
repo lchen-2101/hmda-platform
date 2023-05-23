@@ -3,8 +3,13 @@ package com.hmda.reports.processing
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.functions._
 import com.hmda.reports.model._
+import com.typesafe.config.ConfigFactory
 
 object IncomeRaceEthnicityProcessing {
+
+  private val config = ConfigFactory.load()
+  private val reportYear = config.getString("report.year")
+
   val races = List(
     "Asian",
     "Native Hawaiian or Other Pacific Islander",
@@ -365,7 +370,7 @@ object IncomeRaceEthnicityProcessing {
             "5",
             "Aggregate",
             "Disposition of applications by income, race, and ethnicity of applicant",
-            "2021",
+            reportYear,
             dateFormat.format(new java.util.Date()),
             msa,
             totalGrouping

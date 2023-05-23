@@ -6,6 +6,7 @@ import akka.stream.alpakka.s3.scaladsl.S3
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.hmda.reports.model._
+import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.functions._
 
@@ -14,10 +15,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object BaseProcessing {
 
+  private val config = ConfigFactory.load()
+  private val reportYear = config.getString("report.year")
+
   def prepare(df: DataFrame): DataFrame =
     df.filter(col("msa_md") =!= lit(0))
       .filter(upper(col("tract")) =!= lit("NA"))
-      .filter(upper(col("filing_year")) === lit("2021"))
+      .filter(upper(col("filing_year")) === lit(reportYear))
 
   def includeZeroAndNonZero(dispInput: DataFrame,
                             title: String,
